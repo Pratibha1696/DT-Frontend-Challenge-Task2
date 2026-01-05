@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dynamic Project Management</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #f4f4f4;
+        }
+
+        .asset-card {
+            background: white;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .asset-header {
+            background: #000;
+            color: #fff;
+            padding: 10px;
+        }
+
+        .asset-body {
+            padding: 15px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 300px;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1 id="project-title">Loading Project...</h1>
+    <h3 id="task-title"></h3>
+    <div id="asset-grid"></div>
+
+    <script>
+        function createAssetHTML(asset) {
+            let contentMarkup = "";
+
+            if (asset.asset_content_type === "video") {
+                contentMarkup = `<iframe src="${asset.asset_content.trim()}" allowfullscreen></iframe>`;
+            }
+            else if (asset.asset_content_type === "threadbuilder") {
+                contentMarkup = `<textarea placeholder="Enter thread..."></textarea>`;
+            }
+            else if (asset.asset_content_type === "article") {
+                if (asset.asset_content.trim() !== "") {
+                    contentMarkup = `<a href="${asset.asset_content.trim()}" target="_blank">View Article</a>`;
+                } else {
+                    contentMarkup = `<textarea placeholder="Write article here..."></textarea>`;
+                }
+            }
+
+            return `
+                <div class="asset-card">
+                    <div class="asset-header">${asset.asset_title}</div>
+                    <div class="asset-body">
+                        <p>${asset.asset_description}</p>
+                        ${contentMarkup}
+                    </div>
+                </div>
+            `;
+        }
+
+        // FETCHING THE EXTERNAL DATA 
+        fetch('data.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("HTTP error " + response.status);
+                }
+                return response.json(); // Convert file text to JSON object
+            })
+            .then(projectData => {
+                // Successfully got the data! Now render it:
+                document.getElementById('project-title').innerText = projectData.title;
+
+                const task = projectData.tasks[0];
+                document.getElementById('task-title').innerText = task.task_title;
+
+                const grid = document.getElementById('asset-grid');
+                task.assets.forEach(asset => {
+                    grid.innerHTML += createAssetHTML(asset);
+                });
+            })
+            .catch(error => {
+                console.error("Could not fetch data:", error);
+                document.getElementById('project-title').innerText = "Error loading data.";
+            });
+    </script>
+</body>
+
+</html>
